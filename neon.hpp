@@ -37,11 +37,8 @@ typedef float32x4_t __m128;
 #define RETf inline __m128
 #define RETi inline __m128i
 
-RETf SET(const float &x)
-{
-    return vmovq_n_f32(x);
-}
-
+// set, load and store values
+RETf SET(const float &x) { return vmovq_n_f32(x); }
 RETf SET(float x, float y, float z, float w)
 {
     float32x4_t a = vdupq_n_f32(w);
@@ -50,157 +47,60 @@ RETf SET(float x, float y, float z, float w)
     a = vsetq_lane_f32(x, a, 3);
     return a;
 }
-
-RETi SET(const int &x)
-{
-    return vdupq_n_s32(x);
-}
-
-RETf LDu(const float &x)
-{
-    return vld1q_f32(&x);
-}
-
+RETi SET(const int &x) { return vdupq_n_s32(x); }
+RETf LDu(const float &x) { return vld1q_f32(&x); }
 RETf STRu(float &x, const __m128 y)
 {
     vst1q_f32(&x, y);
     return y;
 }
 
-RETi ADD(const __m128i x, const __m128i y)
-{
-    return vaddq_s32(x, y);
-}
+// arithmetic operators
+RETi ADD(const __m128i x, const __m128i y) { return vaddq_s32(x, y); }
+RETf ADD(const __m128 x, const __m128 y) { return vaddq_f32(x, y); }
+RETf ADD(const __m128 x, const __m128 y, const __m128 z) { return ADD(ADD(x, y), z); }
+RETf ADD(const __m128 a, const __m128 b, const __m128 c, const __m128 &d) { return ADD(ADD(ADD(a, b), c), d); }
+RETf SUB(const __m128 x, const __m128 y) { return vsubq_f32(x, y); }
+RETf MUL(const __m128 x, const __m128 y) { return vmulq_f32(x, y); }
+RETf MUL(const __m128 x, const float y) { return MUL(x, SET(y)); }
+RETf MUL(const float x, const __m128 y) { return MUL(SET(x), y); }
+RETf INC(__m128 &x, const __m128 y) { return x = ADD(x, y); }
+RETf DEC(__m128 &x, const __m128 y) { return x = SUB(x, y); }
+RETf RCP(const __m128 x) { return vrecpeq_f32(x); }
+RETf SQRT(const __m128 x) { return vrecpeq_f32(vrsqrteq_f32(x)); }
+RETf MAX_SSE(const __m128 x, const __m128 y) { return vmaxq_f32(x, y); }
+RETf DIV(const __m128 x, const __m128 y) { return vmulq_f32(x, vrecpeq_f32(y)); }
+RETf DIV(const __m128 x, const float y) { return DIV(x, SET(y)); }
+RETf DIV(const float x, const __m128 y) { return DIV(SET(x), y); }
 
-RETf ADD(const __m128 x, const __m128 y)
-{
-    return vaddq_f32(x, y);
-}
-
-RETf ADD(const __m128 x, const __m128 y, const __m128 z)
-{
-    return ADD(ADD(x, y), z);
-}
-
-RETf ADD(const __m128 a, const __m128 b, const __m128 c, const __m128 &d)
-{
-    return ADD(ADD(ADD(a, b), c), d);
-}
-
-RETf SUB(const __m128 x, const __m128 y)
-{
-    return vsubq_f32(x, y);
-}
-
-RETf MUL(const __m128 x, const __m128 y)
-{
-    return vmulq_f32(x, y);
-}
-
-RETf MUL(const __m128 x, const float y)
-{
-    return MUL(x, SET(y));
-}
-
-RETf MUL(const float x, const __m128 y)
-{
-    return MUL(SET(x), y);
-}
-
-RETf INC(__m128 &x, const __m128 y)
-{
-    return x = ADD(x, y);
-}
-
-RETf DEC(__m128 &x, const __m128 y)
-{
-    return x = SUB(x, y);
-}
-
-RETf RCP(const __m128 x)
-{
-    return vrecpeq_f32(x);
-}
-
-RETf SQRT(const __m128 x)
-{
-    return vrecpeq_f32(vrsqrteq_f32(x));
-}
-
-RETf MAX_SSE(const __m128 x, const __m128 y)
-{
-    return vmaxq_f32(x, y);
-}
-
-RETf DIV(const __m128 x, const __m128 y)
-{
-    return vmulq_f32(x, vrecpeq_f32(y));
-}
-
-RETf DIV(const __m128 x, const float y)
-{
-    return DIV(x, SET(y));
-}
-
-RETf DIV(const float x, const __m128 y)
-{
-    return DIV(SET(x), y);
-}
-
+// logical operators
 RETf AND(const __m128 x, const __m128 y)
 {
     return reinterpret_cast<__m128>(vandq_s32(reinterpret_cast<int32x4_t>(x), reinterpret_cast<int32x4_t>(y)));
 }
-
-RETi AND(const __m128i x, const __m128i y)
-{
-    return vandq_s32(x, y);
-}
-
+RETi AND(const __m128i x, const __m128i y) { return vandq_s32(x, y); }
 RETf ANDNOT(const __m128 x, const __m128 y)
 {
     return reinterpret_cast<__m128>(vbicq_s32(reinterpret_cast<int32x4_t>(x), reinterpret_cast<int32x4_t>(y)));
 }
-
 RETf OR(const __m128 x, const __m128 y)
 {
     return reinterpret_cast<__m128>(vorrq_s32(reinterpret_cast<int32x4_t>(x), reinterpret_cast<int32x4_t>(y)));
 }
-
 RETf XOR(const __m128 x, const __m128 y)
 {
     return reinterpret_cast<__m128>(veorq_s32(reinterpret_cast<int32x4_t>(x), reinterpret_cast<int32x4_t>(y)));
 }
 
-RETf CMPGT(const __m128 x, const __m128 y)
-{
-    return reinterpret_cast<__m128>(vcgtq_f32(x, y));
-}
+// comparison operators
+RETf CMPGT(const __m128 x, const __m128 y) { return reinterpret_cast<__m128>(vcgtq_f32(x, y)); }
+RETf CMPLT(const __m128 x, const __m128 y) { return reinterpret_cast<__m128>(vcltq_f32(x, y)); }
+RETi CMPGT(const __m128i x, const __m128i y) { return reinterpret_cast<__m128i>(vcgtq_s32(x, y)); }
+RETi CMPLT(const __m128i x, const __m128i y) { return reinterpret_cast<__m128i>(vcltq_s32(x, y)); }
 
-RETf CMPLT(const __m128 x, const __m128 y)
-{
-    return reinterpret_cast<__m128>(vcltq_f32(x, y));
-}
-
-RETi CMPGT(const __m128i x, const __m128i y)
-{
-    return reinterpret_cast<__m128i>(vcgtq_s32(x, y));
-}
-
-RETi CMPLT(const __m128i x, const __m128i y)
-{
-    return reinterpret_cast<__m128i>(vcltq_s32(x, y));
-}
-
-RETf CVT(const __m128i x)
-{
-    return vcvtq_f32_s32(x);
-}
-
-RETi CVT(const __m128 x)
-{
-    return vcvtq_s32_f32(x);
-}
+// conversion operators
+RETf CVT(const __m128i x) { return vcvtq_f32_s32(x); }
+RETi CVT(const __m128 x) { return vcvtq_s32_f32(x); }
 
 #undef RETf
 #undef RETi
