@@ -48,12 +48,12 @@ RETf SET(float x, float y, float z, float w)
     return a;
 }
 RETi SET(const int &x) { return vdupq_n_s32(x); }
+RETf LD(const float &x) { return vld1q_f32(&x); }
 RETf LDu(const float &x) { return vld1q_f32(&x); }
-RETf STRu(float &x, const __m128 y)
-{
-    vst1q_f32(&x, y);
-    return y;
-}
+RETf STR(float &x, const __m128 y) { vst1q_f32(&x,y); return y; }
+RETf STR1(float &x, const __m128 y) { vst1q_lane_f32(&x,y,0); return y; }
+RETf STRu(float &x, const __m128 y) { vst1q_f32(&x,y); return y; }
+RETf STR(float &x, const float y) { return STR(x,SET(y)); }
 
 // arithmetic operators
 RETi ADD(const __m128i x, const __m128i y) { return vaddq_s32(x, y); }
@@ -65,10 +65,28 @@ RETf MUL(const __m128 x, const __m128 y) { return vmulq_f32(x, y); }
 RETf MUL(const __m128 x, const float y) { return MUL(x, SET(y)); }
 RETf MUL(const float x, const __m128 y) { return MUL(SET(x), y); }
 RETf INC(__m128 &x, const __m128 y) { return x = ADD(x, y); }
+RETf INC(float &x, const __m128 y) { __m128 t=ADD(LD(x),y); return STR(x,t); }
 RETf DEC(__m128 &x, const __m128 y) { return x = SUB(x, y); }
+RETf DEC(float &x, const __m128 y) { __m128 t=SUB(LD(x),y); return STR(x,t); }
+RETf MIN_SIMD( const __m128 x, const __m128 y ) { return vminq_f32(x,y); }
+//low precision
 RETf RCP(const __m128 x) { return vrecpeq_f32(x); }
+RETf RCPSQRT( const __m128 x ) { return vrsqrteq_f32(x); }
+//high precision, code from https://blog.csdn.net/jacke121/article/details/55260307
+//RETf RCP( const __m128 x ) {
+//    __m128 recip = vrecpeq_f32(x);
+//    recip = vmulq_f32(recip, vrecpsq_f32(recip, x));
+//    return recip;
+//}
+//RETf RCPSQRT( const __m128 x ) {
+//    __m128 e = vrsqrteq_f32(x);
+//    e = vmulq_f32(e, vrsqrtsq_f32(x, vmulq_f32(e, e)));
+//    e = vmulq_f32(e, vrsqrtsq_f32(x, vmulq_f32(e, e)));
+//    return e;
+//}
 RETf SQRT(const __m128 x) { return vrecpeq_f32(vrsqrteq_f32(x)); }
-RETf MAX_SSE(const __m128 x, const __m128 y) { return vmaxq_f32(x, y); }
+
+RETf MAX_SIMD( const __m128 x, const __m128 y ) { return vmaxq_f32(x, y); }
 RETf DIV(const __m128 x, const __m128 y) { return vmulq_f32(x, vrecpeq_f32(y)); }
 RETf DIV(const __m128 x, const float y) { return DIV(x, SET(y)); }
 RETf DIV(const float x, const __m128 y) { return DIV(SET(x), y); }
